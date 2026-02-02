@@ -1,0 +1,43 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./src", // Where your code lives
+    "outDir": "./dist", // Where the compiled code goes
+
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "module": "commonjs", // Standard Node.js module system
+    "target": "es2020", // Modern JavaScript
+    "lib": ["es2020"],
+    "types": ["node"],
+
+    // Module Resolution
+    "esModuleInterop": true, // Allow default imports from CommonJS modules
+    "allowSyntheticDefaultImports": true, // Allow default imports from modules with no default export
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true, // Generate .d.ts.map files
+
+    // Stricter Typechecking Options
+    "exactOptionalPropertyTypes": true,
+
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Recommended Options
+    "strict": true, // Enable all strict type-checking options
+    "isolatedModules": true, // Each file is its own module
+    "moduleDetection": "force", // Force module detection
+    "skipLibCheck": true // Speed up compilation
+  },
+  "include": ["src/**/*"], // Files to include
+  "exclude": ["node_modules"] // Files to exclude
+}

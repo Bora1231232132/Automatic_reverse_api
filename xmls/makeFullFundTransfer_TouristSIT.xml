@@ -1,0 +1,87 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:web="http://webservice.nbc.org.kh/">
+   <soapenv:Header/>
+   <soapenv:Body>
+  <web:makeFullFundTransfer>
+         <web:cm_user_name>rothtana</web:cm_user_name>
+         <web:cm_password>P@ssw0rd</web:cm_password>
+       <web:iso_message><![CDATA[
+<Document
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.05">
+
+<CstmrCdtTrfInitn>
+  <GrpHdr>
+    <MsgId>TESTMSGID0001</MsgId>
+    <CreDtTm>2025-12-31T03:15:22.0490076+07:00</CreDtTm>
+    <NbOfTxs>1</NbOfTxs>
+    <CtrlSum>8000</CtrlSum>
+    <InitgPty>
+      <Nm>Phillip Bank Plc HQ-005</Nm>
+    </InitgPty>
+  </GrpHdr>
+
+  <PmtInf>
+    <PmtInfId>TOURKHPPXXX/BKRTKHPPXXX/test4t</PmtInfId>
+    <PmtMtd>TRF</PmtMtd>
+    <ReqdExctnDt>2025-12-31</ReqdExctnDt>
+
+    <Dbtr>
+      <Nm>TEST</Nm>
+    </Dbtr>
+
+    <DbtrAcct>
+      <Id>
+        <Othr>
+          <Id>015039685739105</Id>
+        </Othr>
+      </Id>
+      <Ccy>KHR</Ccy>
+    </DbtrAcct>
+
+    <DbtrAgt>
+      <FinInstnId>
+        <BICFI>BKRTKHPP</BICFI>
+      </FinInstnId>
+    </DbtrAgt>
+
+    <CdtTrfTxInf>
+      <PmtId>
+        <EndToEndId>AAAA</EndToEndId>
+      </PmtId>
+
+      <Amt>
+        <InstdAmt Ccy="KHR">800</InstdAmt>
+      </Amt>
+
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>TOURKHPP</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+
+      <Cdtr>
+        <Nm>TEST</Nm>
+      </Cdtr>
+
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>000886653481654</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+
+      <RmtInf>
+        <Ustrd>TRANSFER/AAAA0001</Ustrd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </PmtInf>
+</CstmrCdtTrfInitn>
+
+</Document>
+]]></web:iso_message>
+<web:ext_ref>test4t</web:ext_ref>
+</web:makeFullFundTransfer>
+   </soapenv:Body>
+</soapenv:Envelope>

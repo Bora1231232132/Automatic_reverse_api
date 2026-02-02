@@ -1,0 +1,89 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:web="http://webservice.nbc.org.kh/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <web:makeFullFundTransfer>
+         <web:cm_user_name>bora</web:cm_user_name>
+         <web:cm_password>B@ora123</web:cm_password>
+         <web:ext_ref>TOURKHPPXXX/BKRTKHPPXXX/7777666655</web:ext_ref>
+         <web:iso_message><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Document xsi:schemaLocation="xsd/pain.001.001.05.xsd" xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.05" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <CstmrCdtTrfInitn>
+        <GrpHdr>
+            <MsgId>CRTTOURKHPPXXX1738280000333</MsgId>
+            <CreDtTm>2026-01-30T21:13:20.333+07:00</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <CtrlSum>250000</CtrlSum>
+            <InitgPty>
+                <Nm>TOUR</Nm>
+            </InitgPty>
+        </GrpHdr>
+        <PmtInf>
+            <PmtInfId>TOURKHPPXXX/BKRTKHPPXXX/7777666655</PmtInfId>
+            <PmtMtd>TRF</PmtMtd>
+            <BtchBookg>false</BtchBookg>
+            <ReqdExctnDt>2026-01-30</ReqdExctnDt>
+            <Dbtr>
+                <Nm>TOUR</Nm>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <Othr>
+                        <Id>015039685739105</Id>
+                    </Othr>
+                </Id>
+                <Ccy>KHR</Ccy>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>TOURKHPPXXX</BICFI>
+                </FinInstnId>
+            </DbtrAgt>
+            <CdtTrfTxInf>
+                <PmtId>
+                    <InstrId>TOURKHPPXXX/7777666655</InstrId>
+                    <EndToEndId>015039685739105-bkrtkhppxxx@bkrt</EndToEndId>
+                </PmtId>
+                <Amt>
+                    <InstdAmt Ccy="KHR">250000</InstdAmt>
+                </Amt>
+                <ChrgBr>CRED</ChrgBr>
+                <CdtrAgt>
+                    <FinInstnId>
+                        <BICFI>BKRTKHPPXXX</BICFI>
+                    </FinInstnId>
+                </CdtrAgt>
+                <Cdtr>
+                    <Nm>BKRT Merchant</Nm>
+                </Cdtr>
+                <CdtrAcct>
+                    <Id>
+                        <Othr>
+                            <Id>bkrtkhppxxx@bkrt</Id>
+                        </Othr>
+                    </Id>
+                </CdtrAcct>
+                <Purp>
+                    <Cd>GDDS</Cd>
+                </Purp>
+                <RmtInf>
+                    <Ustrd>Scenario3 - Large Payment Test</Ustrd>
+                    <Strd>
+                        <RfrdDocInf>
+                            <Tp>
+                                <CdOrPrtry>
+                                    <Cd>CINV</Cd>
+                                </CdOrPrtry>
+                            </Tp>
+                            <Nb>2</Nb>
+                            <RltdDt>2026-01-30+07:00</RltdDt>
+                        </RfrdDocInf>
+                        <AddtlRmtInf>Phnom Penh/7777666655</AddtlRmtInf>
+                    </Strd>
+                </RmtInf>
+            </CdtTrfTxInf>
+        </PmtInf>
+    </CstmrCdtTrfInitn>
+</Document>]]></web:iso_message>
+      </web:makeFullFundTransfer>
+   </soapenv:Body>
+</soapenv:Envelope>

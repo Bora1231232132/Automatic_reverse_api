@@ -1,0 +1,42 @@
+# Scenario 3: Content Pairing - 250,000 KHR
+# Unique ext_ref/MsgIds per run. Prerequisites: Bot running, BAKONG_PAYEE_CODES=TOUR,BKRT
+
+$ErrorActionPreference = "Stop"
+$projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+Set-Location $projectRoot
+
+$ms = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+$uniqueRef = ("{0:D10}" -f ([long]$ms % 10000000000))
+$msgId1 = "CRTTOURKHPPXXX$ms"
+$today = (Get-Date).ToString("yyyy-MM-dd")
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  Scenario 3 - 250,000 KHR" -ForegroundColor Cyan
+Write-Host "  ext_ref: $uniqueRef" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+Write-Host "[Step 1] TOUR -> BKRT (250,000 KHR)..." -ForegroundColor Yellow
+try {
+    $xml1 = Get-Content -Path "test-scenarios/scenario3-content-pairing-test2/scenario3-step1-original.xml" -Raw -Encoding UTF8
+    $xml1 = $xml1 -replace '7777666655', $uniqueRef -replace 'CRTTOURKHPPXXX1738280000333', $msgId1 -replace '2026-01-30', $today
+    $r1 = Invoke-WebRequest -Uri "http://10.20.6.228/BakongWebService/NBCInterface" -Method POST -ContentType "text/xml; charset=utf-8" -Body $xml1 -UseBasicParsing
+    Write-Host "  OK $($r1.StatusCode)" -ForegroundColor Green
+} catch { Write-Host "  ERROR: $_" -ForegroundColor Red; exit 1 }
+
+Write-Host "[Wait] 70s..." -ForegroundColor Yellow
+Start-Sleep -Seconds 70
+
+$msgId2 = "CRTBKRTKHPPXXX$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
+Write-Host "[Step 2] BKRT -> TOUR (reversal, no label)..." -ForegroundColor Yellow
+try {
+    $xml2 = Get-Content -Path "test-scenarios/scenario3-content-pairing-test2/scenario3-step2-reversal-no-label.xml" -Raw -Encoding UTF8
+    $xml2 = $xml2 -replace '7777666655', $uniqueRef -replace 'CRTBKRTKHPPXXX1738280100444', $msgId2 -replace '2026-01-30', $today
+    $r2 = Invoke-WebRequest -Uri "http://10.20.6.223/cb-adapter/BakongWebService/NBCInterface" -Method POST -ContentType "text/xml; charset=utf-8" -Body $xml2 -UseBasicParsing
+    Write-Host "  OK $($r2.StatusCode)" -ForegroundColor Green
+} catch { Write-Host "  ERROR: $_" -ForegroundColor Red; exit 1 }
+
+Write-Host ""
+Write-Host "Done. Check bot logs; verify DB." -ForegroundColor Cyan
+Write-Host ""

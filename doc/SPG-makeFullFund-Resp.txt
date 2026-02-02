@@ -1,0 +1,35 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+	<SOAP-ENV:Header/>
+	<SOAP-ENV:Body>
+		<ns2:makeFullFundTransferResponse xmlns:ns2="http://webservice.nbc.org.kh/">
+			<ns2:return>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;Document xsi:schemaLocation="xsd/pain.002.001.06.xsd" xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.06" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
+    &lt;CstmrPmtStsRpt&gt;
+        &lt;GrpHdr&gt;
+            &lt;MsgId&gt;RESPONSEXXXX&lt;/MsgId&gt;
+            &lt;CreDtTm&gt;2026-01-19T18:00:00.000&lt;/CreDtTm&gt;
+        &lt;/GrpHdr&gt;
+        &lt;OrgnlGrpInfAndSts&gt;
+            &lt;OrgnlMsgId&gt;CRTNBHQKHPPXXX450584&lt;/OrgnlMsgId&gt;
+            &lt;OrgnlMsgNmId&gt;pain.001.001.05&lt;/OrgnlMsgNmId&gt;
+        &lt;/OrgnlGrpInfAndSts&gt;
+        &lt;OrgnlPmtInfAndSts&gt;
+            &lt;OrgnlPmtInfId&gt;NBCOKHPPXXX/NBHQKHPPXXX/RFOBS450584&lt;/OrgnlPmtInfId&gt;
+            &lt;TxInfAndSts&gt;
+                &lt;TxSts&gt;ACSP&lt;/TxSts&gt;
+                &lt;StsRsnInf&gt;
+                    &lt;AddtlInf&gt;Success&lt;/AddtlInf&gt;
+                &lt;/StsRsnInf&gt;
+                &lt;OrgnlTxRef&gt;
+                    &lt;RmtInf&gt;
+                        &lt;Ustrd&gt;598f81fc40e9508ce134fcc52f56e648175972b004d83e8caa84248367be35b3&lt;/Ustrd&gt;
+                    &lt;/RmtInf&gt;
+                &lt;/OrgnlTxRef&gt;
+            &lt;/TxInfAndSts&gt;
+        &lt;/OrgnlPmtInfAndSts&gt;
+    &lt;/CstmrPmtStsRpt&gt;
+&lt;/Document&gt;
+</ns2:return>
+		</ns2:makeFullFundTransferResponse>
+	</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

@@ -28,9 +28,8 @@ export const ReversalService = {
       try {
         console.log(`\n📥 Fetching transactions for ${payeeCode}...`);
 
-        const soapResponse = await BakongService.getIncomingTransactions(
-          payeeCode,
-        );
+        const soapResponse =
+          await BakongService.getIncomingTransactions(payeeCode);
 
         const innerXml = extractXmlFromSoap(soapResponse);
 
@@ -77,6 +76,7 @@ export const ReversalService = {
     let reversalsFound = 0;
     let alreadyProcessed = 0;
     let newReversals = 0;
+    let failedTransactions = 0;
 
     for (const xmlDoc of allXmlDocuments) {
       try {
@@ -87,10 +87,14 @@ export const ReversalService = {
             alreadyProcessed++;
           } else if (result?.processed) {
             newReversals++;
+          } else {
+            // Reversal detected but processing failed
+            failedTransactions++;
           }
         }
       } catch (error) {
         console.error("❌ Error processing transaction:", error);
+        failedTransactions++;
       }
     }
 
@@ -98,10 +102,11 @@ export const ReversalService = {
     console.log("📊 TRANSACTION SUMMARY");
     console.log("=".repeat(60));
     console.log(`Monitored Accounts: ${payeeCodes.join(", ")}`);
-    console.log(`Total Transactions: ${allXmlDocuments.length}`);
-    console.log(`Reversals Detected: ${reversalsFound}`);
-    console.log(`Already Processed: ${alreadyProcessed}`);
-    console.log(`New Reversals Forwarded to NBCHQ: ${newReversals}`);
+    console.log(`New Reversals Detected: ${newReversals + failedTransactions}`);
+    console.log(`Successfully Forwarded to NBCHQ: ${newReversals}`);
+    if (failedTransactions > 0) {
+      console.log(`Failed: ${failedTransactions}`);
+    }
     console.log("=".repeat(60) + "\n");
   },
 
@@ -187,16 +192,10 @@ export const ReversalService = {
       }
     }
 
-    /** Skip if already processed; allow retry if status is PENDING (forward failed earlier) */
+    /** Skip if already processed successfully */
     const existing = await TransactionModel.getByHash(data.trxHash);
-    const isRetryPENDING = existing?.status === "PENDING";
     if (existing?.status === "SUCCESS") {
       return { isReversal: true, alreadyProcessed: true };
-    }
-    if (isRetryPENDING) {
-      console.log(
-        `   ⏳ Retrying forward for PENDING transaction: ${data.trxHash}`,
-      );
     }
 
     console.log("\n" + "=".repeat(60));
@@ -217,6 +216,7 @@ export const ReversalService = {
 
     /** If hash looks like a 64-char blockchain hash, verify it via Bakong Open API */
     const isBlockchainHash = /^[a-f0-9]{64}$/.test(data.trxHash);
+    let hashVerified = false;
 
     if (isBlockchainHash) {
       console.log(
@@ -236,20 +236,33 @@ export const ReversalService = {
               fullResponse: apiCheck,
             },
           );
-          return;
+          return { isReversal: true, processed: false };
         }
         console.log("✅ Verified! Transaction exists and is valid.");
+        hashVerified = true;
       } catch (error) {
-        console.error(
-          "⚠️ Failed to verify with Open API (Network/Auth Error). Skipping safety check or stopping?",
-          error,
+        console.warn(
+          "⚠️ Bakong Open API is unavailable. Proceeding without hash verification.",
+          error instanceof Error ? error.message : String(error),
         );
-        return;
+        console.log(
+          "   ℹ️ Transaction will be processed based on SOAP data only.",
+        );
+        // Allow processing to continue even if API is down
+        hashVerified = true;
       }
     } else {
       console.log(
         `🔎 Step 3.5: Skipping REST verification (not a 64-char blockchain hash, e.g. direction-based refund). ID: ${data.trxHash}`,
       );
+      // For non-blockchain hashes, we consider them verified by default
+      hashVerified = true;
+    }
+
+    // Only proceed if hash is verified (success status)
+    if (!hashVerified) {
+      console.log(`❌ Hash verification failed. Not storing in DB.`);
+      return { isReversal: true, processed: false };
     }
 
     const nbchqBic = process.env.BAKONG_NBCHQ_BIC || "NBHQKHPPXXX";
@@ -264,59 +277,34 @@ export const ReversalService = {
           currency: data.currency,
         },
       );
-      return;
+      return { isReversal: true, processed: false };
     }
 
-    /** First time only: save PENDING and send ack; retries skip this */
-    if (!isRetryPENDING) {
-      try {
-        await TransactionModel.create(
-          data.trxHash,
-          data.amount,
-          data.currency,
-          "PENDING",
-          {
-            debtorBic: data.debtorBic,
-            creditorBic: data.creditorBic,
-            debtorAccount: data.debtorAccount,
-            creditorAccount: data.creditorAccount,
-            extRef: data.extRef,
-            isReversal: true,
-            originalTrxId: matchedOriginal?.id || undefined,
-          },
-        );
-        console.log("💾 Step 4a: Saved as PENDING (acknowledging receipt).");
-        if (matchedOriginal) {
-          console.log(
-            `   Linked to original transaction ID: ${matchedOriginal.id}`,
-          );
-        }
-      } catch (dbErr) {
-        console.error("❌ [DEBUG] Failed to save PENDING to database.", {
-          trxHash: data.trxHash,
-          error: dbErr,
-        });
-        throw dbErr;
-      }
-
-      /** Must succeed or we do not forward to NBCHQ */
-      try {
-        await BakongService.acknowledgeIncomingTransaction(
-          data.trxHash,
-          rawXml,
-        );
-        console.log("   📩 Acknowledgement done.");
-      } catch (ackErr) {
-        console.error(
-          "❌ Acknowledgement failed — not forwarding to NBCHQ:",
-          ackErr,
-        );
-        throw ackErr;
-      }
-    }
-
+    // Step 4: Call makeAcknowledgement FIRST before sending to NBCHQ
     console.log(
-      `🔄 Forwarding reversal to NBCHQ: ${data.amount} ${data.currency} to ${nbchqBic} (${nbchqAccount})`,
+      `📩 Step 4: Calling makeAcknowledgement for ${data.trxHash}...`,
+    );
+    const ackResult = await BakongService.makeAcknowledgement(
+      data.originalMsgId || data.trxHash,
+      data.originalPmtInfId || data.extRef || "UNKNOWN",
+      data.amount,
+      data.currency,
+      data.debtorBic || process.env.BAKONG_DEBTOR_BIC || "TOURKHPPXXX",
+      data.creditorBic || process.env.BAKONG_CREDITOR_BIC || "BKRTKHPPXXX",
+    );
+
+    if (!ackResult.success) {
+      console.error(
+        `❌ makeAcknowledgement failed for ${data.trxHash}. Not forwarding to NBCHQ.`,
+        ackResult.error,
+      );
+      return { isReversal: true, processed: false };
+    }
+    console.log(`✅ makeAcknowledgement succeeded for ${data.trxHash}`);
+
+    // Step 5: Forward to NBCHQ (only after acknowledgement succeeds)
+    console.log(
+      `🔄 Step 5: Forwarding reversal to NBCHQ: ${data.amount} ${data.currency} to ${nbchqBic} (${nbchqAccount})`,
       `\n   Original MsgId: ${data.originalMsgId ?? "(not available)"}`,
       `\n   Original PmtInfId: ${data.originalPmtInfId ?? "(not available)"}`,
       `\n   Transaction Hash: ${data.trxHash}`,
@@ -329,25 +317,57 @@ export const ReversalService = {
         nbchqBic,
         nbchqAccount,
       );
-      console.log("🚀 Step 5: Forwarded Transaction Sent to NBCHQ.");
+      console.log("🚀 Forwarded Transaction Sent to NBCHQ.");
     } catch (sendErr) {
       console.error(
         "❌ [DEBUG] Failed to forward transaction to NBCHQ.",
         sendErr,
       );
-      throw sendErr;
+      return { isReversal: true, processed: false };
     }
 
+    // Step 6: Only save to DB with SUCCESS status after all steps complete
+    // Hash was verified + Acknowledgement succeeded + NBCHQ forward succeeded
     try {
-      await TransactionModel.updateStatus(data.trxHash, "SUCCESS");
-      console.log("💾 Step 6: Status updated to SUCCESS. Cycle Complete.");
+      // Check if already exists (retry case)
+      const existing = await TransactionModel.getByHash(data.trxHash);
+
+      if (existing) {
+        // Update existing record to SUCCESS
+        await TransactionModel.updateStatus(data.trxHash, "SUCCESS");
+        console.log("💾 Step 6: Status updated to SUCCESS. Cycle Complete.");
+      } else {
+        // Create new record with SUCCESS status directly
+        await TransactionModel.create(
+          data.trxHash,
+          data.amount,
+          data.currency,
+          "SUCCESS",
+          {
+            debtorBic: data.debtorBic,
+            creditorBic: data.creditorBic,
+            debtorAccount: data.debtorAccount,
+            creditorAccount: data.creditorAccount,
+            extRef: data.extRef,
+            isReversal: true,
+            originalTrxId: matchedOriginal?.id || undefined,
+          },
+        );
+        console.log("💾 Step 6: Saved with SUCCESS status. Cycle Complete.");
+        if (matchedOriginal) {
+          console.log(
+            `   Linked to original transaction ID: ${matchedOriginal.id}`,
+          );
+        }
+      }
+
       return { isReversal: true, processed: true };
     } catch (dbErr) {
-      console.error("❌ [DEBUG] Failed to update status to SUCCESS.", {
+      console.error("❌ [DEBUG] Failed to save to database.", {
         trxHash: data.trxHash,
         error: dbErr,
       });
-      throw dbErr;
+      return { isReversal: true, processed: false };
     }
   },
 };

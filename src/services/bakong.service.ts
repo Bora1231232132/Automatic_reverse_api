@@ -52,23 +52,94 @@ export const BakongService = {
   },
 
   /**
-   * Tell NBC we received the transaction (required before forwarding to NBCHQ).
-   * If BAKONG_ACK_ENDPOINT is not set, no request is sent (log only).
-   * TODO: when NBC provides ack SOAP spec, call sendSoapRequest(ackEndpoint, soapBody).
+   * Send acknowledgement to NBC via SOAP makeAcknowledgement to confirm receipt.
+   * Must succeed BEFORE we forward to NBCHQ.
+   * Uses ISO 20022 pain.002.001.06 (Customer Payment Status Report).
    */
-  async acknowledgeIncomingTransaction(
-    trxHash: string,
-    rawXml?: string,
-  ): Promise<void> {
-    const ackEndpoint = process.env.BAKONG_ACK_ENDPOINT;
-    if (!ackEndpoint) {
-      console.log(
-        `   📩 Acknowledgement: recorded (no BAKONG_ACK_ENDPOINT; trx_hash=${trxHash})`,
+  async makeAcknowledgement(
+    originalMsgId: string,
+    originalPmtInfId: string,
+    amount: number,
+    currency: string,
+    debtorBic: string,
+    creditorBic: string,
+  ): Promise<{ success: boolean; response?: string; error?: any }> {
+    console.log(`   📩 Sending makeAcknowledgement for ${originalMsgId}...`);
+
+    const now = new Date();
+    const timestamp = now.getTime();
+    const msgId = `ACK${debtorBic}${timestamp}`;
+    const createDateTime = now.toISOString();
+
+    // Generate pain.002.001.06 Customer Payment Status Report
+    const pain002Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Document xsi:schemaLocation="jaxb/iso20022/pain.002.001.06.xsd" xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.06" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <CstmrPmtStsRpt>
+      <GrpHdr>
+         <MsgId>${msgId}</MsgId>
+         <CreDtTm>${createDateTime}</CreDtTm>
+         <InitgPty>
+            <Nm>${debtorBic}</Nm>
+         </InitgPty>
+         <DbtrAgt>
+            <FinInstnId>
+               <BICFI>${debtorBic}</BICFI>
+            </FinInstnId>
+         </DbtrAgt>
+         <CdtrAgt>
+            <FinInstnId>
+               <BICFI>${creditorBic}</BICFI>
+            </FinInstnId>
+         </CdtrAgt>
+      </GrpHdr>
+      <OrgnlGrpInfAndSts>
+         <OrgnlMsgId>${originalMsgId}</OrgnlMsgId>
+         <OrgnlMsgNmId>pain.001.001.05</OrgnlMsgNmId>
+         <OrgnlCreDtTm>${createDateTime}</OrgnlCreDtTm>
+      </OrgnlGrpInfAndSts>
+      <OrgnlPmtInfAndSts>
+         <OrgnlPmtInfId>${originalPmtInfId}</OrgnlPmtInfId>
+         <TxInfAndSts>
+            <TxSts>ACSC</TxSts>
+            <OrgnlTxRef>
+               <Amt>
+                  <InstdAmt Ccy="${currency}">${amount}</InstdAmt>
+               </Amt>
+               <Dbtr>
+                  <Nm>${debtorBic}</Nm>
+               </Dbtr>
+               <Cdtr>
+                  <Nm>${creditorBic}</Nm>
+               </Cdtr>
+            </OrgnlTxRef>
+         </TxInfAndSts>
+      </OrgnlPmtInfAndSts>
+   </CstmrPmtStsRpt>
+</Document>`;
+
+    const soapBody = `
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:web="http://webservice.nbc.org.kh/">
+         <soapenv:Header/>
+         <soapenv:Body>
+            <web:makeAcknowledgement>
+               <web:cm_user_name>${process.env.BAKONG_USERNAME}</web:cm_user_name>
+               <web:cm_password>${process.env.BAKONG_PASSWORD}</web:cm_password>
+               <web:content_message><![CDATA[${pain002Xml}]]></web:content_message>
+            </web:makeAcknowledgement>
+         </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    try {
+      const response = await sendSoapRequest(soapBody);
+      console.log(`   ✅ Acknowledgement successful for ${originalMsgId}`);
+      return { success: true, response };
+    } catch (error) {
+      console.error(
+        `   ❌ Acknowledgement failed for ${originalMsgId}:`,
+        error,
       );
-      return;
+      return { success: false, error };
     }
-    console.log(`   📩 Sending acknowledgement for ${trxHash}...`);
-    return;
   },
 
   /**

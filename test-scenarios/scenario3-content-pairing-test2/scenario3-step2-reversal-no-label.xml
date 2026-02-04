@@ -10,7 +10,7 @@
     <CstmrCdtTrfInitn>
         <GrpHdr>
             <MsgId>CRTBKRTKHPPXXX1738280100444</MsgId>
-            <CreDtTm>2026-01-30T21:15:00.444+07:00</CreDtTm>
+            <CreDtTm>2026-02-04T21:15:00.444+07:00</CreDtTm>
             <NbOfTxs>1</NbOfTxs>
             <CtrlSum>250000</CtrlSum>
             <InitgPty>
@@ -21,7 +21,7 @@
             <PmtInfId>BKRTKHPPXXX/TOURKHPPXXX/7777666655</PmtInfId>
             <PmtMtd>TRF</PmtMtd>
             <BtchBookg>false</BtchBookg>
-            <ReqdExctnDt>2026-01-30</ReqdExctnDt>
+            <ReqdExctnDt>2026-02-04</ReqdExctnDt>
             <Dbtr>
                 <Nm>BKRT</Nm>
             </Dbtr>

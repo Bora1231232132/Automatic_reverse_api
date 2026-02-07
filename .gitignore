@@ -8,11 +8,18 @@
 # NEVER commit sensitive credentials!
 .env
 .env.*
-!.env.example
+.env.example
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# ===========================
+# 🔒 Private - Keep local (do not push)
+# ===========================
+*.xml
+*.md
+*.ps1
 
 # ===========================
 # 📦 Node.js Dependencies

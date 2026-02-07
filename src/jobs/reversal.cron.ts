@@ -2,19 +2,33 @@ import cron from "node-cron";
 import { ReversalService } from "../services/reversal.service";
 
 /**
- * Start the reversal bot: run processTransactions every minute.
+ * Process transactions (shared logic for both immediate and scheduled runs)
+ */
+const runProcessTransactions = async () => {
+  console.log("\n--- [CRON] Checking for Reversals ---");
+
+  try {
+    await ReversalService.processTransactions();
+  } catch (error) {
+    console.error("[ERROR] Cron Job Failed", error);
+  }
+};
+
+/**
+ * Start the reversal bot: run processTransactions immediately, then every 10 seconds.
  * Errors are logged; next run continues on the next tick.
  */
 export const startCronJobs = () => {
-  console.log("⏰ Cron Scheduler: ACTIVATED (Running every 60s)");
+  console.log(
+    "[CRON] Cron Scheduler: ACTIVATED (Running immediately, then every 5s for faster pain.007 detection)",
+  );
 
-  cron.schedule("* * * * *", async () => {
-    console.log("\n--- ⏰ Cron Triggered: Checking for Reversals ---");
-
-    try {
-      await ReversalService.processTransactions();
-    } catch (error) {
-      console.error("❌ Cron Job Failed", error);
-    }
+  // Run immediately on startup (don't wait for first cron tick)
+  runProcessTransactions().catch((error) => {
+    console.error("[ERROR] Initial run failed:", error);
   });
+
+  // Schedule to run every 5 seconds for faster pain.007 detection
+  // (6-field format: second minute hour day month dayOfWeek)
+  cron.schedule("*/5 * * * * *", runProcessTransactions);
 };

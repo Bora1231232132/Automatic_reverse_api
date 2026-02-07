@@ -24,6 +24,9 @@ RUN npm ci --omit=dev 2>/dev/null || npm install --omit=dev
 # Copy built output from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy environment file (loaded by dotenv in the app)
+COPY .env.development ./
+
 EXPOSE 3000
 
 CMD ["node", "dist/server.js"]

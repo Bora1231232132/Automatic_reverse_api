@@ -10,7 +10,7 @@
     <CstmrCdtTrfInitn>
         <GrpHdr>
             <MsgId>CRTTOURKHPPXXX1738280000333</MsgId>
-            <CreDtTm>2026-01-30T21:13:20.333+07:00</CreDtTm>
+            <CreDtTm>2026-02-04T21:13:20.333+07:00</CreDtTm>
             <NbOfTxs>1</NbOfTxs>
             <CtrlSum>250000</CtrlSum>
             <InitgPty>
@@ -21,7 +21,7 @@
             <PmtInfId>TOURKHPPXXX/BKRTKHPPXXX/7777666655</PmtInfId>
             <PmtMtd>TRF</PmtMtd>
             <BtchBookg>false</BtchBookg>
-            <ReqdExctnDt>2026-01-30</ReqdExctnDt>
+            <ReqdExctnDt>2026-02-04</ReqdExctnDt>
             <Dbtr>
                 <Nm>TOUR</Nm>
             </Dbtr>
@@ -75,7 +75,7 @@
                                 </CdOrPrtry>
                             </Tp>
                             <Nb>2</Nb>
-                            <RltdDt>2026-01-30+07:00</RltdDt>
+                            <RltdDt>2026-02-04+07:00</RltdDt>
                         </RfrdDocInf>
                         <AddtlRmtInf>Phnom Penh/7777666655</AddtlRmtInf>
                     </Strd>

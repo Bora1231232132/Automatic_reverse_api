@@ -29,10 +29,11 @@ Write-Host "[Wait] 70s..." -ForegroundColor Yellow
 Start-Sleep -Seconds 70
 
 $msgId2 = "CRTBKRTKHPPXXX$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
+$uniqueRef2 = ("{0:D10}" -f ([long]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()) % 10000000000))
 Write-Host "[Step 2] BKRT -> TOUR (reversal, no label)..." -ForegroundColor Yellow
 try {
     $xml2 = Get-Content -Path "test-scenarios/scenario4-small-amount/scenario4-step2-reversal-no-label.xml" -Raw -Encoding UTF8
-    $xml2 = $xml2 -replace '3333222211', $uniqueRef -replace 'CRTBKRTKHPPXXX1738285100666', $msgId2 -replace '2026-01-30', $today
+    $xml2 = $xml2 -replace '3333222211', $uniqueRef2 -replace 'CRTBKRTKHPPXXX1738285100666', $msgId2 -replace '2026-01-30', $today
     $r2 = Invoke-WebRequest -Uri "http://10.20.6.223/cb-adapter/BakongWebService/NBCInterface" -Method POST -ContentType "text/xml; charset=utf-8" -Body $xml2 -UseBasicParsing
     Write-Host "  OK $($r2.StatusCode)" -ForegroundColor Green
 } catch { Write-Host "  ERROR: $_" -ForegroundColor Red; exit 1 }

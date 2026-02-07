@@ -3,19 +3,25 @@ import dotenv from "dotenv";
 import path from "path";
 
 /** Load DB config from .env.development (used by pool and testDbconnection) */
-dotenv.config({
-  path: path.resolve(process.cwd(), ".env.development"),
-});
+// Only load if not already loaded (dotenv.config() is idempotent but we avoid redundant calls)
+if (!process.env.DB_HOST) {
+  dotenv.config({
+    path: path.resolve(process.cwd(), ".env.development"),
+  });
+}
 
-console.log("🔍 Loading DB configuration from environment...");
-console.log("DB_HOST:", process.env.DB_HOST);
-console.log("DB_PORT:", process.env.DB_PORT);
-console.log("DB_USER:", process.env.DB_USER);
-console.log(
-  "DB_PASSWORD:",
-  process.env.DB_PASSWORD ? "***set***" : "❌ NOT SET",
-);
-console.log("DB_NAME:", process.env.DB_NAME);
+// Only log DB config if in debug mode or first load
+if (process.env.DEBUG_DB === "true") {
+  console.log("[DB] Loading DB configuration from environment...");
+  console.log("DB_HOST:", process.env.DB_HOST);
+  console.log("DB_PORT:", process.env.DB_PORT);
+  console.log("DB_USER:", process.env.DB_USER);
+  console.log(
+    "DB_PASSWORD:",
+    process.env.DB_PASSWORD ? "***set***" : "[ERROR] NOT SET",
+  );
+  console.log("DB_NAME:", process.env.DB_NAME);
+}
 
 /**
  * PostgreSQL connection pool. Reuse this for all DB queries.
@@ -29,7 +35,7 @@ const pool = new pg.Pool({
   database: process.env.DB_NAME,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 1000, // Reduced from 2000ms to 1000ms for faster failure detection
 });
 
 /**
@@ -39,11 +45,15 @@ const pool = new pg.Pool({
 export const testDbconnection = async () => {
   try {
     const client = await pool.connect();
-    console.log("✅ Database connection successful");
+    // Only log on first successful connection
+    if (!(global as any).__dbConnected) {
+      console.log("[DB] Database connection successful");
+      (global as any).__dbConnected = true;
+    }
     client.release();
   } catch (err: any) {
     if (err.code === "3D000") {
-      console.log("⚠️  Database does not exist. Attempting to create it...");
+      console.log("[DB] Database does not exist. Attempting to create it...");
 
       const setupPool = new pg.Pool({
         host: process.env.DB_HOST,
@@ -57,22 +67,22 @@ export const testDbconnection = async () => {
         const setupClient = await setupPool.connect();
         await setupClient.query(`CREATE DATABASE ${process.env.DB_NAME};`);
         console.log(
-          `✅ Database '${process.env.DB_NAME}' created successfully!`,
+          `[DB] Database '${process.env.DB_NAME}' created successfully!`,
         );
         setupClient.release();
         await setupPool.end();
 
         const client = await pool.connect();
-        console.log("✅ Database connection successful");
+        console.log("[DB] Database connection successful");
         client.release();
       } catch (createErr) {
-        console.error("❌ Failed to create database:");
+        console.error("[ERROR] Failed to create database:");
         console.error(createErr);
         process.exit(1);
       }
     } else {
       console.error(
-        "❌ Connection Failed. Check your .env file or if Postgres is running.",
+        "[ERROR] Connection Failed. Check your .env file or if Postgres is running.",
       );
       console.error(err);
       process.exit(1);

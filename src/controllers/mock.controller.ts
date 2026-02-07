@@ -6,7 +6,7 @@ import { Request, Response } from "express";
  */
 export const MockBakongController = {
   handleSoapRequest: (req: Request, res: Response) => {
-    console.log("🎭 Mock Server received a call!");
+    console.log("[MOCK] Mock Server received a call!");
 
     const fakeResponse = `
     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">

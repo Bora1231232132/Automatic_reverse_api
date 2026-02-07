@@ -46,12 +46,12 @@ export const TransactionModel = {
     return result.rows[0] || null;
   },
 
-  /** Insert a reversal row (status PENDING or SUCCESS; optional BICs, accounts, original_trx_id) */
+  /** Insert a reversal row (status PENDING, SUCCESS, or ACK_SENT; optional BICs, accounts, original_trx_id) */
   async create(
     hash: string,
     amount: number,
     currency: string,
-    status: "PENDING" | "SUCCESS",
+    status: "PENDING" | "SUCCESS" | "ACK_SENT",
     options?: {
       debtorBic?: string | undefined;
       creditorBic?: string | undefined;
